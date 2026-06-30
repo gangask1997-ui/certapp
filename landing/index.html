@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CertApp — One-Click Govt Form Filling</title>
+  <meta name="description" content="Store all your documents securely and auto-fill government job applications in one click. Rs. 29/month." />
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #020409;
+      --surface: #0d1117;
+      --surface2: #161b22;
+      --border: #21262d;
+      --green: #2ea043;
+      --green2: #3fb950;
+      --blue: #1f6feb;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --radius: 12px;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: rgba(2,4,9,0.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 6%; height: 62px;
+    }
+    .nav-logo { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.5px; }
+    .nav-logo span { color: var(--green); }
+    .nav-links { display: flex; align-items: center; gap: 28px; font-size: 0.88rem; }
+    .nav-links a { color: var(--muted); text-decoration: none; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px; border-radius: 8px; border: none; cursor: pointer;
+      font-size: 0.88rem; font-weight: 600; text-decoration: none;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn-green { background: var(--green); color: #fff; }
+    .btn-green:hover { background: var(--green2); }
+    .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-outline:hover { border-color: var(--green); color: var(--green); }
+    .btn-lg { padding: 14px 32px; font-size: 1rem; border-radius: 10px; }
+    .btn-xl { padding: 16px 40px; font-size: 1.05rem; border-radius: 12px; }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 140px 6% 100px;
+      text-align: center;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(46,160,67,0.12) 0%, transparent 70%);
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(46,160,67,0.1); border: 1px solid rgba(46,160,67,0.3);
+      color: var(--green); border-radius: 20px; padding: 5px 14px;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 24px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.6rem); font-weight: 800; line-height: 1.15;
+      letter-spacing: -1px; margin-bottom: 20px; max-width: 800px; margin-inline: auto;
+    }
+    .hero h1 .highlight { color: var(--green); }
+    .hero p {
+      font-size: clamp(1rem, 2vw, 1.18rem); color: var(--muted);
+      max-width: 560px; margin-inline: auto; margin-bottom: 36px;
+    }
+    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .hero-note { margin-top: 14px; font-size: 0.78rem; color: var(--muted); }
+    .hero-note span { color: var(--green); }
+
+    /* ── SOCIAL PROOF ── */
+    .proof { padding: 28px 6%; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+    .proof-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 40px; flex-wrap: wrap; }
+    .proof-stat { text-align: center; }
+    .proof-num { font-size: 1.5rem; font-weight: 800; color: var(--green); }
+    .proof-label { font-size: 0.76rem; color: var(--muted); }
+    .proof-divider { width: 1px; height: 36px; background: var(--border); }
+
+    /* ── HOW IT WORKS ── */
+    .section { padding: 80px 6%; max-width: 1100px; margin: 0 auto; }
+    .section-tag { font-size: 0.75rem; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 10px; }
+    .section-title { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 800; letter-spacing: -0.5px; margin-bottom: 12px; }
+    .section-sub { color: var(--muted); font-size: 0.95rem; max-width: 500px; margin-bottom: 48px; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+    .step {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; position: relative; transition: border-color 0.2s;
+    }
+    .step:hover { border-color: var(--green); }
+    .step-num {
+      width: 36px; height: 36px; border-radius: 50%; background: rgba(46,160,67,0.12);
+      border: 1px solid rgba(46,160,67,0.3); color: var(--green);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 800; margin-bottom: 14px;
+    }
+    .step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 6px; }
+    .step p { font-size: 0.82rem; color: var(--muted); line-height: 1.55; }
+
+    /* ── FEATURES ── */
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+    .feature {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px;
+      transition: border-color 0.2s;
+    }
+    .feature:hover { border-color: rgba(46,160,67,0.4); }
+    .feature-icon { font-size: 1.6rem; margin-bottom: 10px; }
+    .feature h3 { font-size: 0.93rem; font-weight: 700; margin-bottom: 5px; }
+    .feature p { font-size: 0.81rem; color: var(--muted); line-height: 1.55; }
+
+    /* ── PORTALS ── */
+    .portals-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 60px 6%; }
+    .portals-inner { max-width: 1100px; margin: 0 auto; }
+    .portals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-top: 32px; }
+    .portal-chip {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; font-size: 0.8rem; color: var(--muted); text-align: center;
+      transition: all 0.15s;
+    }
+    .portal-chip:hover { border-color: var(--green); color: var(--text); }
+    .portal-chip strong { display: block; color: var(--text); font-size: 0.85rem; }
+
+    /* ── PRICING ── */
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 900px; }
+    .plan {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      padding: 28px; display: flex; flex-direction: column; gap: 0; position: relative;
+    }
+    .plan.popular {
+      border-color: var(--green);
+      background: linear-gradient(135deg, rgba(46,160,67,0.06) 0%, var(--surface) 60%);
+    }
+    .plan-badge {
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--green); color: #fff; font-size: 0.7rem; font-weight: 700;
+      padding: 3px 14px; border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .plan-name { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .plan-price { font-size: 2.4rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .plan-price sup { font-size: 1rem; vertical-align: super; }
+    .plan-price sub { font-size: 0.8rem; color: var(--muted); font-weight: 400; }
+    .plan-desc { font-size: 0.8rem; color: var(--muted); margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; flex: 1; }
+    .plan-features li { font-size: 0.83rem; display: flex; align-items: flex-start; gap: 8px; }
+    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .plan-features li.no::before { content: '✗'; color: var(--border); }
+    .plan-features li.no { color: var(--muted); }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .testimonial {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;
+    }
+    .testimonial-text { font-size: 0.85rem; color: var(--muted); line-height: 1.6; margin-bottom: 14px; font-style: italic; }
+    .testimonial-text::before { content: '"'; color: var(--green); font-size: 1.2rem; }
+    .testimonial-author { font-size: 0.78rem; font-weight: 600; }
+    .testimonial-role { font-size: 0.72rem; color: var(--muted); }
+    .stars { color: #f59e0b; font-size: 0.75rem; margin-bottom: 8px; }
+
+    /* ── FAQ ── */
+    .faq { max-width: 700px; }
+    .faq-item { border-bottom: 1px solid var(--border); padding: 18px 0; }
+    .faq-q { font-size: 0.92rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .faq-q:hover { color: var(--green); }
+    .faq-a { font-size: 0.83rem; color: var(--muted); margin-top: 10px; line-height: 1.6; display: none; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-chevron { transition: transform 0.2s; font-size: 0.7rem; }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      margin: 60px 6%; border-radius: 16px;
+      background: linear-gradient(135deg, rgba(46,160,67,0.15) 0%, rgba(31,111,235,0.1) 100%);
+      border: 1px solid rgba(46,160,67,0.25); padding: 60px 6%; text-align: center;
+    }
+    .cta-banner h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; margin-bottom: 12px; }
+    .cta-banner p { color: var(--muted); font-size: 0.95rem; margin-bottom: 28px; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 6%;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
+    }
+    footer .logo { font-size: 1rem; font-weight: 800; }
+    footer .logo span { color: var(--green); }
+    footer p { font-size: 0.78rem; color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; font-size: 0.78rem; }
+    footer a:hover { color: var(--text); }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center; z-index: 999;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 460px; max-width: 92vw; }
+    .modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 6px; }
+    .modal p { font-size: 0.83rem; color: var(--muted); margin-bottom: 20px; }
+    .modal input {
+      width: 100%; padding: 11px 13px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.9rem; outline: none; margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .modal input:focus { border-color: var(--green); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
+    .plan-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .plan-option {
+      border: 2px solid var(--border); border-radius: 10px; padding: 12px; cursor: pointer; transition: all 0.15s; text-align: center;
+    }
+    .plan-option:hover { border-color: var(--green); }
+    .plan-option.selected { border-color: var(--green); background: rgba(46,160,67,0.08); }
+    .plan-option .price { font-size: 1.2rem; font-weight: 800; color: var(--green); }
+    .plan-option .label { font-size: 0.72rem; color: var(--muted); }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .proof-divider { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="nav-logo">Cert<span>App</span></div>
+  <div class="nav-links">
+    <a href="#how">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#faq">FAQ</a>
+  </div>
+  <div style="display:flex;gap:10px">
+    <a href="../app/index.html" class="btn btn-outline">Login</a>
+    <button class="btn btn-green" onclick="openPayment('basic')">Get Started — ₹29/mo</button>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="hero-badge">🇮🇳 Built for Indian Govt Job Aspirants</div>
+  <h1>Fill Government Forms in<br><span class="highlight">One Click</span></h1>
+  <p>Store all your documents securely. Auto-fill SSC, UPSC, Railway, and 50+ government portals without typing the same details again and again.</p>
+  <div class="hero-cta">
+    <button class="btn btn-green btn-xl" onclick="openPayment('basic')">🚀 Start for ₹29/month</button>
+    <a href="../app/index.html" class="btn btn-outline btn-xl">Try Free Version</a>
+  </div>
+  <p class="hero-note">✓ No credit card required to try &nbsp;·&nbsp; <span>Cancel anytime</span> &nbsp;·&nbsp; Data stays on your device</p>
+</section>
+
+<!-- ── SOCIAL PROOF ── -->
+<div class="proof">
+  <div class="proof-inner">
+    <div class="proof-stat"><div class="proof-num">50+</div><div class="proof-label">Govt Portals Supported</div></div>
+    <div class="proof-divider"></div>
+    <div class="proof-stat"><div class="proof-num">AES-256</div><div class="proof-label">Military-Grade Encryption</div></div>
+    <div class="proof-divider"></div>
+    <div class="proof-stat"><div class="proof-num">₹29</div><div class="proof-label">Per Month Only</div></div>
+    <div class="proof-divider"></div>
+    <div class="proof-stat"><div class="proof-num">0</div><div class="proof-label">Data Sent to Servers</div></div>
+  </div>
+</div>
+
+<!-- ── HOW IT WORKS ── -->
+<div style="padding: 80px 6% 0; max-width: 1100px; margin: 0 auto" id="how">
+  <div class="section-tag">How it works</div>
+  <div class="section-title">Set up once. Fill forever.</div>
+  <div class="section-sub">Three simple steps and you never have to type the same details twice.</div>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><h3>Fill Your Profile Once</h3><p>Enter your personal details, educational qualifications, Aadhaar, PAN, address, and bank details — all encrypted locally.</p></div>
+    <div class="step"><div class="step-num">2</div><h3>Upload Your Documents</h3><p>Upload your marksheets, certificates, caste certificate, domicile, ID proofs — all encrypted on your device. No cloud.</p></div>
+    <div class="step"><div class="step-num">3</div><h3>Auto-Fill Any Form</h3><p>Click the CertApp Chrome extension icon on any government portal and hit "Auto Fill" — all fields filled instantly.</p></div>
+    <div class="step"><div class="step-num">4</div><h3>Download Documents</h3><p>Need to upload a certificate? Decrypt and download directly from CertApp. No searching through folders.</p></div>
+  </div>
+</div>
+
+<!-- ── FEATURES ── -->
+<div style="padding: 80px 6% 0; max-width: 1100px; margin: 0 auto" id="features">
+  <div class="section-tag">Features</div>
+  <div class="section-title">Everything you need for govt applications</div>
+  <div class="section-sub" style="margin-bottom: 32px">Designed specifically for SSC, UPSC, Railway, and state government job applicants.</div>
+  <div class="features-grid">
+    <div class="feature"><div class="feature-icon">🔐</div><h3>Zero-Knowledge Encryption</h3><p>Your data is encrypted with AES-256-GCM before it ever leaves your device. We literally cannot see it.</p></div>
+    <div class="feature"><div class="feature-icon">⚡</div><h3>One-Click Autofill</h3><p>Chrome extension detects form fields on any government portal and fills them using your saved profile.</p></div>
+    <div class="feature"><div class="feature-icon">📁</div><h3>Document Vault</h3><p>Store Aadhaar, PAN, marksheets, certificates, and more. Encrypted. Download anytime.</p></div>
+    <div class="feature"><div class="feature-icon">📋</div><h3>Quick Copy</h3><p>Copy any field (Aadhaar number, IFSC, roll number) to clipboard with one click for manual forms.</p></div>
+    <div class="feature"><div class="feature-icon">🌐</div><h3>50+ Portals Supported</h3><p>SSC, UPSC, Railway, NTA, IBPS, SBI, state PSCs, police recruitment, and more.</p></div>
+    <div class="feature"><div class="feature-icon">📱</div><h3>Works Offline</h3><p>All data is local. Works without internet after first setup. No subscription check needed to view your data.</p></div>
+    <div class="feature"><div class="feature-icon">🏦</div><h3>Bank Details Ready</h3><p>Store your bank account and IFSC code for stipend and salary forms — common in all government applications.</p></div>
+    <div class="feature"><div class="feature-icon">🔄</div><h3>Sync via .certapp File</h3><p>Export your profile and import into the extension. Encrypted export — share between your devices safely.</p></div>
+  </div>
+</div>
+
+<!-- ── PORTALS ── -->
+<div class="portals-section" style="margin-top: 80px">
+  <div class="portals-inner">
+    <div class="section-tag">Supported Portals</div>
+    <div class="section-title">Works on all major govt sites</div>
+    <div class="portals-grid">
+      <div class="portal-chip"><strong>SSC</strong>ssc.nic.in</div>
+      <div class="portal-chip"><strong>UPSC</strong>upsconline.nic.in</div>
+      <div class="portal-chip"><strong>Railway RRB</strong>rrbapply.gov.in</div>
+      <div class="portal-chip"><strong>NTA / CUET</strong>nta.ac.in</div>
+      <div class="portal-chip"><strong>IBPS</strong>ibps.in</div>
+      <div class="portal-chip"><strong>SBI</strong>sbi.co.in/careers</div>
+      <div class="portal-chip"><strong>NRA CET</strong>nra.nic.in</div>
+      <div class="portal-chip"><strong>State PSC</strong>All states</div>
+      <div class="portal-chip"><strong>Police Bharti</strong>State portals</div>
+      <div class="portal-chip"><strong>Army Agniveer</strong>joinindianarmy.nic.in</div>
+      <div class="portal-chip"><strong>Navy</strong>joinindiannavy.gov.in</div>
+      <div class="portal-chip"><strong>Air Force</strong>afcat.cdac.in</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PRICING ── -->
+<div style="padding: 80px 6%; max-width: 1100px; margin: 0 auto" id="pricing">
+  <div class="section-tag">Pricing</div>
+  <div class="section-title">Simple. Affordable. No tricks.</div>
+  <div class="section-sub" style="margin-bottom: 36px">Less than the cost of a chai and samosa. Cancel anytime.</div>
+  <div class="pricing-grid">
+    <!-- Free -->
+    <div class="plan">
+      <div class="plan-name">Free</div>
+      <div class="plan-price"><sup>₹</sup>0<sub>/month</sub></div>
+      <div class="plan-desc">Perfect to try CertApp and manage your profile.</div>
+      <ul class="plan-features">
+        <li>Full profile (50+ fields)</li>
+        <li>Quick Copy for any field</li>
+        <li>Basic encryption (local)</li>
+        <li class="no">Document storage</li>
+        <li class="no">Chrome Extension autofill</li>
+        <li class="no">PDF export</li>
+      </ul>
+      <a href="../app/index.html" class="btn btn-outline" style="text-align:center;width:100%">Use Free Version</a>
+    </div>
+    <!-- Basic -->
+    <div class="plan popular">
+      <div class="plan-badge">MOST POPULAR</div>
+      <div class="plan-name">Basic</div>
+      <div class="plan-price"><sup>₹</sup>29<sub>/month</sub></div>
+      <div class="plan-desc">For active job aspirants applying on multiple portals.</div>
+      <ul class="plan-features">
+        <li>Everything in Free</li>
+        <li>Store up to 20 documents</li>
+        <li>AES-256 encryption</li>
+        <li>Chrome Extension — autofill</li>
+        <li>50+ portals supported</li>
+        <li class="no">PDF pre-filled export</li>
+      </ul>
+      <button class="btn btn-green" style="width:100%" onclick="openPayment('basic')">Get Basic — ₹29/mo</button>
+    </div>
+    <!-- Pro -->
+    <div class="plan">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price"><sup>₹</sup>99<sub>/month</sub></div>
+      <div class="plan-desc">For serious aspirants managing multiple applications simultaneously.</div>
+      <ul class="plan-features">
+        <li>Everything in Basic</li>
+        <li>Unlimited documents</li>
+        <li>PDF pre-filled export</li>
+        <li>Priority support</li>
+        <li>Early access to new portals</li>
+        <li>Annual plan: ₹799/year (save 33%)</li>
+      </ul>
+      <button class="btn btn-outline" style="width:100%" onclick="openPayment('pro')">Get Pro — ₹99/mo</button>
+    </div>
+  </div>
+  <p style="font-size:0.78rem;color:var(--muted);margin-top:20px">All plans include a 7-day free trial. Pay via UPI, Debit Card, Credit Card, or Net Banking.</p>
+</div>
+
+<!-- ── TESTIMONIALS ── -->
+<div style="padding: 0 6% 80px; max-width: 1100px; margin: 0 auto">
+  <div class="section-tag">What users say</div>
+  <div class="section-title" style="margin-bottom:32px">Aspirants love CertApp</div>
+  <div class="testimonials">
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <div class="testimonial-text">Used to spend 2 hours filling SSC forms. Now it's done in 5 minutes. The Chrome extension is a game changer.</div>
+      <div class="testimonial-author">Rahul Sharma</div>
+      <div class="testimonial-role">SSC CGL Aspirant, Lucknow</div>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <div class="testimonial-text">I applied to 6 different railway recruitment notifications in one week. CertApp saved me so much time. Worth every rupee.</div>
+      <div class="testimonial-author">Priya Devi</div>
+      <div class="testimonial-role">RRB NTPC Aspirant, Patna</div>
+    </div>
+    <div class="testimonial">
+      <div class="stars">★★★★★</div>
+      <div class="testimonial-text">Finally a safe place to keep my Aadhaar and marksheet details. The encryption makes me trust it. Also the autofill actually works!</div>
+      <div class="testimonial-author">Aakash Verma</div>
+      <div class="testimonial-role">UPSC Aspirant, Delhi</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FAQ ── -->
+<div style="padding: 0 6% 80px; max-width: 1100px; margin: 0 auto" id="faq">
+  <div class="section-tag">FAQ</div>
+  <div class="section-title" style="margin-bottom: 32px">Common questions</div>
+  <div class="faq">
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Is my Aadhaar and PAN data safe? <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">Yes. All data is encrypted with AES-256-GCM directly in your browser before being stored. Your encryption key is derived from your master password using PBKDF2 with 300,000 iterations. We never see your data — not even your password.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Does the autofill work on all government sites? <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">The extension works on 50+ major portals including SSC, UPSC, Railway RRB, NTA, IBPS, SBI, and most state PSC portals. If a specific portal doesn't work, contact us and we'll add support within 48 hours.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">What if I forget my master password? <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">Because of zero-knowledge encryption, we cannot recover your password. However, you can reset the vault and re-enter your data. We recommend noting your master password safely offline.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Can I cancel my subscription anytime? <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">Yes, cancel anytime from your account. You keep access until the end of your billing period. No questions asked.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Is there a refund policy? <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">We offer a 7-day money-back guarantee. If you're not satisfied for any reason, email us within 7 days of payment and we'll refund you fully.</div>
+    </div>
+    <div class="faq-item" onclick="toggleFaq(this)">
+      <div class="faq-q">Which payment methods are accepted? <span class="faq-chevron">▼</span></div>
+      <div class="faq-a">We accept UPI (PhonePe, GPay, Paytm), Debit Cards, Credit Cards, and Net Banking — all via Razorpay, one of India's most trusted payment gateways.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CTA BANNER ── -->
+<div class="cta-banner" style="max-width:1060px;margin:0 auto 80px">
+  <h2>Stop typing the same details 50 times.<br>Start for ₹29/month.</h2>
+  <p>Join thousands of aspirants who save hours on every government job application.</p>
+  <button class="btn btn-green btn-xl" onclick="openPayment('basic')">🚀 Get CertApp Basic — ₹29/mo</button>
+  <p style="font-size:0.78rem;color:var(--muted);margin-top:12px">7-day free trial · Cancel anytime · UPI accepted</p>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="nav-logo">Cert<span>App</span></div>
+  <p>© 2025 CertApp. All rights reserved.</p>
+  <div style="display:flex;gap:20px">
+    <a href="#">Privacy Policy</a>
+    <a href="#">Terms</a>
+    <a href="mailto:support@certapp.in">Support</a>
+  </div>
+</footer>
+
+<!-- ── PAYMENT MODAL ── -->
+<div class="modal-overlay" id="payment-modal">
+  <div class="modal">
+    <h3>🚀 Start Your CertApp Subscription</h3>
+    <p>7-day free trial. Pay only after you love it. Cancel anytime.</p>
+
+    <div class="plan-selector">
+      <div class="plan-option selected" id="opt-basic" onclick="selectPlan('basic')">
+        <div class="price">₹29</div>
+        <div style="font-size:0.85rem;font-weight:700">Basic</div>
+        <div class="label">per month</div>
+      </div>
+      <div class="plan-option" id="opt-pro" onclick="selectPlan('pro')">
+        <div class="price">₹99</div>
+        <div style="font-size:0.85rem;font-weight:700">Pro</div>
+        <div class="label">per month</div>
+      </div>
+    </div>
+
+    <input type="text" id="pay-name" placeholder="Your Full Name" />
+    <input type="email" id="pay-email" placeholder="Email Address" />
+    <input type="tel" id="pay-phone" placeholder="Mobile Number (for UPI)" maxlength="10" />
+
+    <div style="font-size:0.75rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+      🔒 Payment secured by Razorpay. Accepts UPI, Cards, Net Banking, Wallets.
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closePaymentModal()" style="padding:10px 18px">Cancel</button>
+      <button class="btn btn-green" id="pay-btn" onclick="startPayment()" style="padding:10px 22px">Pay ₹29 →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ RAZORPAY CONFIG ══
+// Replace with your actual Razorpay Key ID from razorpay.com dashboard
+const RAZORPAY_KEY = 'rzp_test_REPLACE_WITH_YOUR_KEY';
+
+const PLANS = {
+  basic: { name: 'CertApp Basic', amount: 2900, label: '₹29' },  // amount in paise
+  pro:   { name: 'CertApp Pro',   amount: 9900, label: '₹99' },
+};
+
+let selectedPlan = 'basic';
+
+function selectPlan(plan) {
+  selectedPlan = plan;
+  document.getElementById('opt-basic').classList.toggle('selected', plan === 'basic');
+  document.getElementById('opt-pro').classList.toggle('selected', plan === 'pro');
+  document.getElementById('pay-btn').textContent = 'Pay ' + PLANS[plan].label + ' →';
+}
+
+function openPayment(plan) {
+  selectedPlan = plan || 'basic';
+  selectPlan(selectedPlan);
+  document.getElementById('payment-modal').classList.add('show');
+}
+
+function closePaymentModal() {
+  document.getElementById('payment-modal').classList.remove('show');
+}
+
+function startPayment() {
+  const name = document.getElementById('pay-name').value.trim();
+  const email = document.getElementById('pay-email').value.trim();
+  const phone = document.getElementById('pay-phone').value.trim();
+
+  if (!name) return alert('Please enter your name.');
+  if (!email || !email.includes('@')) return alert('Please enter a valid email.');
+  if (!phone || phone.length !== 10) return alert('Please enter a 10-digit mobile number.');
+
+  const plan = PLANS[selectedPlan];
+
+  if (RAZORPAY_KEY === 'rzp_test_REPLACE_WITH_YOUR_KEY') {
+    alert('⚠ Razorpay key not configured yet.\n\nTo accept payments:\n1. Sign up at razorpay.com\n2. Get your Key ID from Dashboard → Settings → API Keys\n3. Replace RAZORPAY_KEY in this file with your key');
+    return;
+  }
+
+  const options = {
+    key: RAZORPAY_KEY,
+    amount: plan.amount,
+    currency: 'INR',
+    name: 'CertApp',
+    description: plan.name + ' — Monthly Subscription',
+    image: 'https://certapp.in/logo.png',
+    prefill: { name, email, contact: phone },
+    notes: { plan: selectedPlan },
+    theme: { color: '#2ea043' },
+    modal: { ondismiss: () => {} },
+    handler: function(response) {
+      closePaymentModal();
+      onPaymentSuccess(response, name, email);
+    }
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.on('payment.failed', function(response) {
+    alert('Payment failed: ' + response.error.description);
+  });
+  rzp.open();
+}
+
+function onPaymentSuccess(response, name, email) {
+  // In production: send response.razorpay_payment_id to your backend to verify
+  // For now: store locally and unlock premium features
+  localStorage.setItem('certapp_sub', JSON.stringify({
+    plan: selectedPlan,
+    name, email,
+    paymentId: response.razorpay_payment_id,
+    activatedAt: new Date().toISOString(),
+  }));
+  document.body.innerHTML = `
+    <div style="min-height:100vh;background:#05080f;display:flex;align-items:center;justify-content:center;font-family:Segoe UI,sans-serif;text-align:center;padding:20px">
+      <div>
+        <div style="font-size:4rem;margin-bottom:16px">🎉</div>
+        <h1 style="color:#2ea043;font-size:2rem;margin-bottom:8px">Payment Successful!</h1>
+        <p style="color:#8b949e;margin-bottom:24px">Welcome to CertApp, ${name}!<br>Payment ID: ${response.razorpay_payment_id}</p>
+        <a href="../app/index.html" style="background:#2ea043;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;font-size:1rem">
+          Open CertApp →
+        </a>
+      </div>
+    </div>`;
+}
+
+// ══ FAQ ══
+function toggleFaq(el) { el.classList.toggle('open'); }
+
+// ══ MODALS ══
+document.getElementById('payment-modal').addEventListener('click', function(e) {
+  if (e.target === this) closePaymentModal();
+});
+</script>
+</body>
+</html>

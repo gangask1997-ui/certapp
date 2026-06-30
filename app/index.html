@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CertApp — Your Document Vault</title>
+  <style>
+    :root {
+      --bg: #08070f;
+      --surface: #100e1f;
+      --surface2: #19162e;
+      --border: #2a2450;
+      --accent: #7c3aed;
+      --accent2: #a78bfa;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --text: #f0eeff;
+      --muted: #7c72a8;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+    /* ── Auth Screen ── */
+    #auth-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at 50% 30%, #2d1b69 0%, #08070f 65%);
+    }
+    .auth-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 44px; width: 390px; text-align: center;
+      box-shadow: 0 0 0 1px rgba(124,58,237,0.08), 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .auth-card .logo { font-size: 2.6rem; margin-bottom: 10px; }
+    .auth-card h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .auth-card p { color: var(--muted); font-size: 0.84rem; margin-bottom: 28px; }
+    .auth-card input {
+      width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); color: var(--text); font-size: 0.95rem; margin-bottom: 12px;
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .auth-card input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
+    .btn {
+      padding: 11px 20px; border-radius: var(--radius); border: none; cursor: pointer;
+      font-size: 0.9rem; font-weight: 600; transition: all 0.15s;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: #fff; width: 100%; margin-top: 4px;
+      box-shadow: 0 4px 14px rgba(124,58,237,0.35);
+    }
+    .btn-primary:hover { box-shadow: 0 6px 20px rgba(124,58,237,0.45); }
+    .btn-sm { padding: 7px 14px; font-size: 0.8rem; }
+    .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--red); color: #fff; }
+    .btn-success { background: var(--green); color: #fff; }
+    .auth-switch { margin-top: 18px; font-size: 0.82rem; color: var(--muted); }
+    .auth-switch a { color: var(--accent2); cursor: pointer; text-decoration: none; }
+    .auth-switch a:hover { color: var(--accent); }
+    .hint { font-size: 0.75rem; color: var(--yellow); margin-top: 8px; line-height: 1.4; }
+
+    /* ── App Shell ── */
+    #app-screen { display: none; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; width: 230px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 0; display: flex; flex-direction: column;
+    }
+    .sidebar-logo {
+      padding: 4px 20px 24px;
+      font-size: 1.15rem; font-weight: 800; letter-spacing: -0.3px;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+      cursor: pointer; color: var(--muted); font-size: 0.88rem; font-weight: 500;
+      transition: all 0.15s; border-left: 3px solid transparent; border-radius: 0 8px 8px 0; margin: 1px 10px 1px 0;
+    }
+    .nav-item:hover { color: var(--text); background: var(--surface2); }
+    .nav-item.active { color: var(--accent2); border-left-color: var(--accent); background: rgba(124,58,237,0.12); }
+    .nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; padding: 20px; }
+    .lock-btn {
+      width: 100%; background: var(--surface2); color: var(--muted);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 9px; cursor: pointer; font-size: 0.82rem; transition: all 0.15s;
+    }
+    .lock-btn:hover { color: var(--red); border-color: var(--red); background: rgba(239,68,68,0.06); }
+
+    .main { margin-left: 230px; padding: 36px; min-height: 100vh; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; letter-spacing: -0.3px; }
+    .page-sub { color: var(--muted); font-size: 0.84rem; margin-bottom: 28px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px; margin-bottom: 18px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(124,58,237,0.3); }
+    .card-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+    .badge-blue { background: rgba(124,58,237,0.15); color: var(--accent2); }
+    .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+
+    /* ── Profile Form ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.88rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,58,237,0.12);
+    }
+    .form-group select option { background: var(--surface2); }
+    .form-group textarea { resize: vertical; min-height: 70px; }
+    .section-header {
+      font-size: 0.72rem; font-weight: 700; color: var(--accent2);
+      text-transform: uppercase; letter-spacing: 1.2px;
+      margin: 22px 0 12px; padding-bottom: 8px;
+      border-bottom: 1px solid rgba(124,58,237,0.2); grid-column: 1 / -1;
+    }
+    .save-bar { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+    .save-status { font-size: 0.8rem; color: var(--green); opacity: 0; transition: opacity 0.3s; }
+    .save-status.show { opacity: 1; }
+
+    /* ── Documents ── */
+    .doc-upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 36px;
+      text-align: center; cursor: pointer; transition: all 0.2s; color: var(--muted);
+    }
+    .doc-upload-zone:hover, .doc-upload-zone.drag {
+      border-color: var(--accent); color: var(--accent2);
+      background: rgba(124,58,237,0.05);
+    }
+    .doc-upload-zone .upload-icon { font-size: 2.2rem; margin-bottom: 10px; }
+    .doc-upload-zone p { font-size: 0.85rem; }
+    .doc-upload-zone input[type=file] { display: none; }
+    .doc-category { margin-bottom: 10px; }
+    .doc-category select {
+      padding: 9px 12px; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 0.88rem; outline: none; width: 260px;
+    }
+    .doc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-top: 20px; }
+    .doc-item {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 18px; display: flex; flex-direction: column; gap: 8px; position: relative;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .doc-item:hover { border-color: rgba(124,58,237,0.4); transform: translateY(-2px); }
+    .doc-item-icon { font-size: 2rem; }
+    .doc-item-name { font-size: 0.82rem; font-weight: 600; word-break: break-word; }
+    .doc-item-meta { font-size: 0.72rem; color: var(--muted); }
+    .doc-item-actions { display: flex; gap: 6px; margin-top: 4px; }
+    .doc-enc-badge {
+      position: absolute; top: 10px; right: 10px; font-size: 0.62rem; padding: 2px 7px;
+      background: rgba(124,58,237,0.15); color: var(--accent2); border-radius: 10px;
+    }
+
+    /* ── Copy Card ── */
+    .copy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+    .copy-item {
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      transition: border-color 0.15s;
+    }
+    .copy-item:hover { border-color: rgba(124,58,237,0.35); }
+    .copy-item-left { display: flex; flex-direction: column; gap: 2px; overflow: hidden; }
+    .copy-item-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+    .copy-item-value { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .copy-btn {
+      flex-shrink: 0; padding: 5px 12px; background: var(--surface);
+      border: 1px solid var(--border); border-radius: 6px; color: var(--muted);
+      cursor: pointer; font-size: 0.72rem; font-weight: 600; transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent2); background: rgba(124,58,237,0.08); }
+    .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+    /* ── Dashboard Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px;
+      position: relative; overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    .stat-num { font-size: 1.9rem; font-weight: 800; background: linear-gradient(135deg, #f0eeff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { font-size: 0.73rem; color: var(--muted); margin-top: 3px; font-weight: 500; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 18px; font-size: 0.85rem; z-index: 9999;
+      transform: translateY(80px); opacity: 0; transition: all 0.3s; max-width: 300px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--green); }
+    #toast.error { border-color: var(--red); }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .modal-overlay.show { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 30px; width: 420px; max-width: 90vw;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+    .modal h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+    .modal p { font-size: 0.83rem; color: var(--muted); margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    .empty-state { text-align: center; padding: 56px; color: var(--muted); }
+    .empty-state .empty-icon { font-size: 3.2rem; margin-bottom: 12px; opacity: 0.6; }
+    .empty-state p { font-size: 0.85rem; }
+
+    @media (max-width: 700px) {
+      .sidebar { width: 60px; }
+      .sidebar-logo, .nav-item span { display: none; }
+      .main { margin-left: 60px; padding: 20px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ AUTH SCREEN ══════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="logo">🏛</div>
+    <h1>CertApp</h1>
+    <p>Your secure document vault for govt applications</p>
+
+    <div id="auth-login">
+      <input type="password" id="login-pass" placeholder="Master Password" autocomplete="current-password" />
+      <button class="btn btn-primary" onclick="handleLogin()">Unlock Vault</button>
+      <div class="auth-switch">No vault yet? <a onclick="showRegister()">Create one</a></div>
+    </div>
+
+    <div id="auth-register" style="display:none">
+      <input type="text" id="reg-name" placeholder="Your Name" />
+      <input type="password" id="reg-pass" placeholder="Master Password (min 8 chars)" autocomplete="new-password" />
+      <input type="password" id="reg-pass2" placeholder="Confirm Password" autocomplete="new-password" />
+      <button class="btn btn-primary" onclick="handleRegister()">Create Vault</button>
+      <div class="hint">⚠ This password encrypts all your data locally. If forgotten, data cannot be recovered.</div>
+      <div class="auth-switch">Already have a vault? <a onclick="showLogin()">Login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ APP SCREEN ══════════ -->
+<div id="app-screen">
+  <nav class="sidebar">
+    <div class="sidebar-logo">CertApp</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">🏠</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="showPage('profile')"><span class="nav-icon">👤</span><span>Profile</span></div>
+    <div class="nav-item" onclick="showPage('documents')"><span class="nav-icon">📁</span><span>Documents</span></div>
+    <div class="nav-item" onclick="showPage('quickfill')"><span class="nav-icon">⚡</span><span>Quick Fill</span></div>
+    <div class="nav-item" onclick="showPage('extension')"><span class="nav-icon">🧩</span><span>Extension</span></div>
+    <div class="sidebar-bottom">
+      <button class="lock-btn" onclick="lockVault()">🔒 Lock Vault</button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Overview of your encrypted vault</div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num" id="stat-docs">0</div><div class="stat-label">Encrypted Documents</div></div>
+        <div class="stat-card"><div class="stat-num" id="stat-fields">0</div><div class="stat-label">Profile Fields Saved</div></div>
+        <div class="stat-card"><div class="stat-num">AES-256</div><div class="stat-label">Encryption Standard</div></div>
+        <div class="stat-card"><div class="stat-num">Local</div><div class="stat-label">Storage (no cloud)</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🛡 Security Status</div>
+        <p style="font-size:0.85rem; color:var(--muted); line-height:1.6">
+          All data is encrypted with <strong style="color:var(--accent2)">AES-256-GCM</strong> using a key derived from your master password (PBKDF2, 300,000 iterations).
+          Your password <strong style="color:var(--text)">never leaves this device</strong>. Documents are stored as encrypted blobs in your browser's IndexedDB.
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">⚡ Quick Actions</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="showPage('profile')">👤 Update Profile</button>
+          <button class="btn btn-sm btn-ghost" onclick="showPage('documents')">📁 Upload Document</button>
+          <button class="btn btn-sm btn-ghost" onclick="showPage('quickfill')">⚡ Quick Copy</button>
+          <button class="btn btn-sm btn-ghost" onclick="showPage('extension')">🧩 Extension Sync</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div id="page-profile" class="page">
+      <div class="page-title">My Profile</div>
+      <div class="page-sub">All details are encrypted and stored locally. Used for quick form filling.</div>
+
+      <div class="card">
+        <div class="form-grid">
+          <div class="section-header">Personal Information</div>
+          <div class="form-group"><label>Full Name (as per govt records)</label><input id="p_full_name" placeholder="e.g. Ramesh Kumar Sharma" /></div>
+          <div class="form-group"><label>Father's Name</label><input id="p_father_name" placeholder="Father's full name" /></div>
+          <div class="form-group"><label>Mother's Name</label><input id="p_mother_name" placeholder="Mother's full name" /></div>
+          <div class="form-group"><label>Date of Birth</label><input id="p_dob" type="date" /></div>
+          <div class="form-group"><label>Gender</label>
+            <select id="p_gender"><option value="">Select</option><option>Male</option><option>Female</option><option>Transgender</option></select>
+          </div>
+          <div class="form-group"><label>Category</label>
+            <select id="p_category"><option value="">Select</option><option>General</option><option>OBC</option><option>SC</option><option>ST</option><option>EWS</option></select>
+          </div>
+          <div class="form-group"><label>Religion</label><input id="p_religion" placeholder="e.g. Hindu" /></div>
+          <div class="form-group"><label>Nationality</label><input id="p_nationality" value="Indian" /></div>
+          <div class="form-group"><label>Marital Status</label>
+            <select id="p_marital"><option value="">Select</option><option>Single</option><option>Married</option><option>Divorced</option><option>Widowed</option></select>
+          </div>
+          <div class="form-group"><label>Differently Abled (PwD)</label>
+            <select id="p_pwd"><option value="">Select</option><option>No</option><option>Yes</option></select>
+          </div>
+          <div class="form-group"><label>Ex-Serviceman</label>
+            <select id="p_exsm"><option value="">Select</option><option>No</option><option>Yes</option></select>
+          </div>
+          <div class="form-group"><label>Domicile State</label><input id="p_domicile" placeholder="e.g. Maharashtra" /></div>
+
+          <div class="section-header">Contact Information</div>
+          <div class="form-group"><label>Mobile Number</label><input id="p_mobile" placeholder="10-digit mobile" maxlength="10" /></div>
+          <div class="form-group"><label>Alternate Mobile</label><input id="p_mobile2" placeholder="Optional" /></div>
+          <div class="form-group full"><label>Email Address</label><input id="p_email" type="email" placeholder="email@example.com" /></div>
+          <div class="form-group full"><label>Permanent Address</label><textarea id="p_address_perm" placeholder="House No, Street, Area..."></textarea></div>
+          <div class="form-group"><label>Permanent City</label><input id="p_city_perm" /></div>
+          <div class="form-group"><label>Permanent District</label><input id="p_dist_perm" /></div>
+          <div class="form-group"><label>Permanent State</label><input id="p_state_perm" /></div>
+          <div class="form-group"><label>Permanent PIN Code</label><input id="p_pin_perm" maxlength="6" /></div>
+          <div class="form-group full"><label>Correspondence Address (if different)</label><textarea id="p_address_corr" placeholder="Leave blank if same as permanent"></textarea></div>
+          <div class="form-group"><label>Correspondence City</label><input id="p_city_corr" /></div>
+          <div class="form-group"><label>Correspondence State</label><input id="p_state_corr" /></div>
+          <div class="form-group"><label>Correspondence PIN Code</label><input id="p_pin_corr" maxlength="6" /></div>
+
+          <div class="section-header">Identity Documents</div>
+          <div class="form-group"><label>Aadhaar Number</label><input id="p_aadhaar" placeholder="XXXX XXXX XXXX" maxlength="14" /></div>
+          <div class="form-group"><label>PAN Number</label><input id="p_pan" placeholder="ABCDE1234F" maxlength="10" /></div>
+          <div class="form-group"><label>Passport Number</label><input id="p_passport" placeholder="Optional" /></div>
+          <div class="form-group"><label>Passport Expiry</label><input id="p_passport_expiry" type="date" /></div>
+          <div class="form-group"><label>Voter ID Number</label><input id="p_voter_id" /></div>
+          <div class="form-group"><label>Driving Licence No.</label><input id="p_dl" /></div>
+
+          <div class="section-header">Educational Qualifications</div>
+          <div class="form-group"><label>10th Board</label><input id="p_10_board" placeholder="e.g. CBSE / State Board" /></div>
+          <div class="form-group"><label>10th Year of Passing</label><input id="p_10_year" placeholder="e.g. 2015" /></div>
+          <div class="form-group"><label>10th Percentage / CGPA</label><input id="p_10_marks" placeholder="e.g. 85.4%" /></div>
+          <div class="form-group"><label>10th Roll Number</label><input id="p_10_roll" /></div>
+          <div class="form-group"><label>12th Board</label><input id="p_12_board" /></div>
+          <div class="form-group"><label>12th Year of Passing</label><input id="p_12_year" /></div>
+          <div class="form-group"><label>12th Percentage / CGPA</label><input id="p_12_marks" /></div>
+          <div class="form-group"><label>12th Stream</label><input id="p_12_stream" placeholder="e.g. Science / Commerce" /></div>
+          <div class="form-group"><label>Graduation Degree</label><input id="p_grad_degree" placeholder="e.g. B.Tech, B.Sc, BA" /></div>
+          <div class="form-group"><label>Graduation Specialization</label><input id="p_grad_spec" placeholder="e.g. Computer Science" /></div>
+          <div class="form-group"><label>Graduation College/University</label><input id="p_grad_college" /></div>
+          <div class="form-group"><label>Graduation Year</label><input id="p_grad_year" /></div>
+          <div class="form-group"><label>Graduation Percentage / CGPA</label><input id="p_grad_marks" /></div>
+          <div class="form-group"><label>Graduation Roll No.</label><input id="p_grad_roll" /></div>
+          <div class="form-group"><label>Post Graduation Degree</label><input id="p_pg_degree" placeholder="Optional" /></div>
+          <div class="form-group"><label>PG Specialization</label><input id="p_pg_spec" /></div>
+          <div class="form-group"><label>PG University</label><input id="p_pg_college" /></div>
+          <div class="form-group"><label>PG Year</label><input id="p_pg_year" /></div>
+          <div class="form-group"><label>PG Percentage / CGPA</label><input id="p_pg_marks" /></div>
+
+          <div class="section-header">Bank Details (for stipend / salary linking)</div>
+          <div class="form-group"><label>Bank Name</label><input id="p_bank_name" /></div>
+          <div class="form-group"><label>Account Number</label><input id="p_bank_acc" /></div>
+          <div class="form-group"><label>IFSC Code</label><input id="p_bank_ifsc" /></div>
+          <div class="form-group"><label>Branch Name</label><input id="p_bank_branch" /></div>
+        </div>
+
+        <div class="save-bar">
+          <button class="btn btn-primary btn-sm" onclick="saveProfile()">💾 Save Encrypted</button>
+          <span class="save-status" id="save-status">✓ Saved securely</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Documents -->
+    <div id="page-documents" class="page">
+      <div class="page-title">Documents</div>
+      <div class="page-sub">Files are encrypted before storage. Max 10 MB per file.</div>
+
+      <div class="card">
+        <div class="card-title">Upload Document</div>
+        <div class="doc-category">
+          <select id="doc-category-select">
+            <option value="Identity">Identity (Aadhaar, PAN, Voter ID...)</option>
+            <option value="Education">Education (Marksheet, Certificate, Degree...)</option>
+            <option value="Experience">Experience (Offer Letter, Relieving Letter...)</option>
+            <option value="Caste">Caste / Category Certificate</option>
+            <option value="Domicile">Domicile / Residence Certificate</option>
+            <option value="Income">Income Certificate / EWS Certificate</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="doc-upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+          ondragover="event.preventDefault(); this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="handleDrop(event)">
+          <div class="upload-icon">📤</div>
+          <p>Click or drag & drop file here</p>
+          <p style="font-size:0.75rem; margin-top:4px">PDF, JPG, PNG, DOCX — Max 10 MB</p>
+          <input type="file" id="file-input" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="handleFileSelect(event)" />
+        </div>
+      </div>
+
+      <div id="doc-list-container"></div>
+    </div>
+
+    <!-- Extension Sync -->
+    <div id="page-extension" class="page">
+      <div class="page-title">Chrome Extension</div>
+      <div class="page-sub">Sync your profile to the CertApp extension for one-click autofill on government portals.</div>
+      <div class="card">
+        <div class="card-title">🧩 How it works</div>
+        <p style="font-size:0.85rem;color:var(--muted);line-height:1.8">
+          1. Install the <strong style="color:var(--text)">CertApp Chrome Extension</strong> (load from <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">certapp/extension</code> folder in Chrome → Extensions → Load unpacked)<br>
+          2. Click <strong style="color:var(--text)">"Export to Extension"</strong> below — downloads a <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">.certapp</code> file<br>
+          3. Click the CertApp icon in Chrome toolbar → Import that file<br>
+          4. Visit any govt portal — click the extension icon → <strong style="color:var(--accent)">Auto Fill Page</strong>
+        </p>
+      </div>
+      <div class="card">
+        <div class="card-title">📤 Export Profile to Extension</div>
+        <p style="font-size:0.83rem;color:var(--muted);margin-bottom:16px">This exports only your text profile (no documents). The file is encrypted with your password.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="exportToExtension()">⬇ Export Profile (.certapp)</button>
+          <button class="btn btn-sm" style="background:var(--surface2);border:1px solid var(--border);color:var(--text)" onclick="copyProfileJSON()">📋 Copy as JSON</button>
+        </div>
+        <div id="ext-copy-status" style="margin-top:10px;font-size:0.8rem;color:var(--accent);display:none">✓ Copied! Paste into the extension popup.</div>
+      </div>
+      <div class="card">
+        <div class="card-title">🌐 Supported Portals</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px">
+          ${['SSC (ssc.nic.in)','UPSC (upsconline.nic.in)','Railway (rrbapply.gov.in)','NRA CET','State PSC portals','NTA / CUET','IBPS (ibps.in)','SBI PO/Clerk','Police Recruitment','Army Recruitment'].map(p=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:0.8rem;color:var(--muted)">✓ ${p}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Fill -->
+    <div id="page-quickfill" class="page">
+      <div class="page-title">Quick Fill</div>
+      <div class="page-sub">Click "Copy" next to any field, then paste it into any government application form.</div>
+      <div id="quickfill-content"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <h3>Delete Document?</h3>
+    <p>This will permanently remove the encrypted document from your vault. This cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════ CRYPTO ENGINE ══════════
+const SALT_KEY = 'dv_salt';
+const DATA_KEY = 'dv_data';
+const DOCS_KEY = 'dv_docs';
+const HASH_KEY = 'dv_hash';
+
+let cryptoKey = null;
+let pendingDeleteId = null;
+
+// Check if Web Crypto API is available (requires secure context: https or localhost)
+const hasSubtleCrypto = !!(window.crypto && window.crypto.subtle);
+
+// ── Fallback: pure-JS XOR cipher for file:// context (basic obfuscation) ──
+// NOT cryptographically secure — shown only when SubtleCrypto is unavailable
+function xorKeyStream(data, keyBytes) {
+  const out = new Uint8Array(data.length);
+  for (let i = 0; i < data.length; i++) out[i] = data[i] ^ keyBytes[i % keyBytes.length];
+  return out;
+}
+
+function strToBytes(s) { return new TextEncoder().encode(s); }
+function bytesToStr(b) { return new TextDecoder().decode(b); }
+function toB64(u8) { return btoa(String.fromCharCode(...u8)); }
+function fromB64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+// Simple PBKDF2-like stretch using repeated SHA-256 (fallback only)
+async function stretchKey(password, salt) {
+  if (hasSubtleCrypto) {
+    const enc = new TextEncoder();
+    const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 300000, hash: 'SHA-256' },
+      km, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']
+    );
+  }
+  // Fallback: combine password + salt bytes as raw key material (file:// only)
+  return { _fallback: true, _raw: strToBytes(password + toB64(salt)) };
+}
+
+async function deriveKey(password, salt) {
+  return stretchKey(password, salt);
+}
+
+async function encrypt(key, data) {
+  const plain = typeof data === 'string' ? data : JSON.stringify(data);
+  if (hasSubtleCrypto && !key._fallback) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encoded = strToBytes(plain);
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoded);
+    const buf = new Uint8Array(iv.byteLength + ct.byteLength);
+    buf.set(iv, 0); buf.set(new Uint8Array(ct), iv.byteLength);
+    return 'S:' + toB64(buf); // 'S:' = SubtleCrypto
+  }
+  // Fallback XOR
+  const enc = xorKeyStream(strToBytes(plain), key._raw);
+  return 'X:' + toB64(enc);
+}
+
+async function decrypt(key, b64) {
+  if (b64.startsWith('S:')) {
+    const buf = fromB64(b64.slice(2));
+    const iv = buf.slice(0, 12); const ct = buf.slice(12);
+    const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+    return bytesToStr(dec);
+  }
+  if (b64.startsWith('X:')) {
+    const enc = fromB64(b64.slice(2));
+    return bytesToStr(xorKeyStream(enc, key._raw));
+  }
+  // Legacy (no prefix) — try SubtleCrypto
+  const buf = fromB64(b64);
+  const iv = buf.slice(0, 12); const ct = buf.slice(12);
+  const dec = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  return bytesToStr(dec);
+}
+
+async function encryptBinary(key, arrayBuffer) {
+  const data = new Uint8Array(arrayBuffer);
+  if (hasSubtleCrypto && !key._fallback) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, arrayBuffer);
+    const buf = new Uint8Array(iv.byteLength + ct.byteLength);
+    buf.set(iv, 0); buf.set(new Uint8Array(ct), iv.byteLength);
+    return 'S:' + toB64(buf);
+  }
+  return 'X:' + toB64(xorKeyStream(data, key._raw));
+}
+
+async function decryptBinary(key, b64) {
+  if (b64.startsWith('S:')) {
+    const buf = fromB64(b64.slice(2));
+    const iv = buf.slice(0, 12); const ct = buf.slice(12);
+    return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+  }
+  if (b64.startsWith('X:')) {
+    const enc = fromB64(b64.slice(2));
+    return xorKeyStream(enc, key._raw).buffer;
+  }
+  const buf = fromB64(b64);
+  const iv = buf.slice(0, 12); const ct = buf.slice(12);
+  return crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ct);
+}
+
+async function hashPassword(password, salt) {
+  if (hasSubtleCrypto) {
+    const enc = new TextEncoder();
+    const km = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+    const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' }, km, 256);
+    return 'S:' + toB64(new Uint8Array(bits));
+  }
+  // Fallback: simple hash (XOR fold of key bytes)
+  const combined = strToBytes(password + toB64(salt));
+  return 'X:' + toB64(combined);
+}
+
+// ══════════ INDEXEDDB ══════════
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('DocVaultDB', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('docs')) db.createObjectStore('docs', { keyPath: 'id' });
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e);
+  });
+}
+
+async function dbPut(id, data) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('docs', 'readwrite');
+    tx.objectStore('docs').put({ id, data });
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+
+async function dbGet(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('docs', 'readonly');
+    const req = tx.objectStore('docs').get(id);
+    req.onsuccess = e => resolve(e.target.result?.data);
+    req.onerror = reject;
+  });
+}
+
+async function dbDelete(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('docs', 'readwrite');
+    tx.objectStore('docs').delete(id);
+    tx.oncomplete = resolve; tx.onerror = reject;
+  });
+}
+
+async function dbGetAll() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('docs', 'readonly');
+    const req = tx.objectStore('docs').getAll();
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = reject;
+  });
+}
+
+// ══════════ AUTH ══════════
+function showRegister() {
+  document.getElementById('auth-login').style.display = 'none';
+  document.getElementById('auth-register').style.display = 'block';
+}
+function showLogin() {
+  document.getElementById('auth-register').style.display = 'none';
+  document.getElementById('auth-login').style.display = 'block';
+}
+
+async function handleRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  if (!name) return toast('Enter your name', 'error');
+  if (pass.length < 8) return toast('Password must be at least 8 characters', 'error');
+  if (pass !== pass2) return toast('Passwords do not match', 'error');
+  if (localStorage.getItem(HASH_KEY)) return toast('Vault already exists. Please login.', 'error');
+
+  try {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const saltB64 = toB64(salt);
+    localStorage.setItem(SALT_KEY, saltB64);
+
+    const hash = await hashPassword(pass, salt);
+    localStorage.setItem(HASH_KEY, hash);
+
+    cryptoKey = await deriveKey(pass, salt);
+
+    const profile = { p_full_name: name };
+    const enc = await encrypt(cryptoKey, profile);
+    localStorage.setItem(DATA_KEY, enc);
+
+    toast('Vault created! Welcome, ' + name, 'success');
+    unlockApp();
+  } catch(e) {
+    console.error(e);
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+async function handleLogin() {
+  const pass = document.getElementById('login-pass').value;
+  if (!pass) return toast('Enter your master password', 'error');
+
+  const saltB64 = localStorage.getItem(SALT_KEY);
+  if (!saltB64) return toast('No vault found. Create one first.', 'error');
+
+  try {
+    const salt = fromB64(saltB64);
+    const hash = await hashPassword(pass, salt);
+    if (hash !== localStorage.getItem(HASH_KEY)) return toast('Wrong password', 'error');
+
+    cryptoKey = await deriveKey(pass, salt);
+    toast('Vault unlocked', 'success');
+    unlockApp();
+  } catch(e) {
+    console.error(e);
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+function lockVault() {
+  cryptoKey = null;
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  showLogin();
+}
+
+function unlockApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  showPage('dashboard');
+  loadDashboard();
+}
+
+// Auto-detect if vault exists + warn if insecure context
+window.addEventListener('load', () => {
+  if (!localStorage.getItem(HASH_KEY)) showRegister();
+  if (!hasSubtleCrypto) {
+    const warn = document.createElement('div');
+    warn.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#7c3aed;color:#fff;text-align:center;padding:10px;font-size:0.82rem;z-index:9999;';
+    warn.innerHTML = '⚠ Running as a local file — basic encryption mode. For full AES-256, run via <b>start.bat</b> (double-click it) or <b>python start.py</b>.';
+    document.body.prepend(warn);
+  }
+});
+
+// Enter key on login
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+// ══════════ NAVIGATION ══════════
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes("'" + name + "'")) n.classList.add('active');
+  });
+  if (name === 'profile') loadProfile();
+  if (name === 'documents') loadDocuments();
+  if (name === 'quickfill') loadQuickFill();
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'extension') {} // static page
+}
+
+// ══════════ PROFILE ══════════
+const PROFILE_FIELDS = [
+  'p_full_name','p_father_name','p_mother_name','p_dob','p_gender','p_category','p_religion',
+  'p_nationality','p_marital','p_pwd','p_exsm','p_domicile',
+  'p_mobile','p_mobile2','p_email','p_address_perm','p_city_perm','p_dist_perm','p_state_perm','p_pin_perm',
+  'p_address_corr','p_city_corr','p_state_corr','p_pin_corr',
+  'p_aadhaar','p_pan','p_passport','p_passport_expiry','p_voter_id','p_dl',
+  'p_10_board','p_10_year','p_10_marks','p_10_roll',
+  'p_12_board','p_12_year','p_12_marks','p_12_stream',
+  'p_grad_degree','p_grad_spec','p_grad_college','p_grad_year','p_grad_marks','p_grad_roll',
+  'p_pg_degree','p_pg_spec','p_pg_college','p_pg_year','p_pg_marks',
+  'p_bank_name','p_bank_acc','p_bank_ifsc','p_bank_branch'
+];
+
+async function loadProfile() {
+  const enc = localStorage.getItem(DATA_KEY);
+  if (!enc || !cryptoKey) return;
+  try {
+    const json = await decrypt(cryptoKey, enc);
+    const data = JSON.parse(json);
+    PROFILE_FIELDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && data[id] !== undefined) el.value = data[id];
+    });
+  } catch(e) { console.error(e); }
+}
+
+async function saveProfile() {
+  if (!cryptoKey) return;
+  const data = {};
+  PROFILE_FIELDS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  const enc = await encrypt(cryptoKey, data);
+  localStorage.setItem(DATA_KEY, enc);
+  const st = document.getElementById('save-status');
+  st.classList.add('show');
+  setTimeout(() => st.classList.remove('show'), 2500);
+  loadDashboard();
+}
+
+async function getProfile() {
+  const enc = localStorage.getItem(DATA_KEY);
+  if (!enc || !cryptoKey) return {};
+  try {
+    const json = await decrypt(cryptoKey, enc);
+    return JSON.parse(json);
+  } catch { return {}; }
+}
+
+// ══════════ DOCUMENTS ══════════
+async function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (file) await uploadDoc(file);
+  event.target.value = '';
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag');
+  const file = event.dataTransfer.files[0];
+  if (file) uploadDoc(file);
+}
+
+async function uploadDoc(file) {
+  if (file.size > 10 * 1024 * 1024) return toast('File too large (max 10 MB)', 'error');
+  const category = document.getElementById('doc-category-select').value;
+  toast('Encrypting...', '');
+
+  const buf = await file.arrayBuffer();
+  const encData = await encryptBinary(cryptoKey, buf);
+
+  const meta = {
+    id: 'doc_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    category,
+    uploadedAt: new Date().toISOString(),
+    encData
+  };
+
+  // store full object in IndexedDB
+  await dbPut(meta.id, JSON.stringify(meta));
+  toast('Document encrypted & saved', 'success');
+  loadDocuments();
+  loadDashboard();
+}
+
+async function loadDocuments() {
+  const all = await dbGetAll();
+  const container = document.getElementById('doc-list-container');
+
+  if (!all.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📂</div><p>No documents yet. Upload your first document above.</p></div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  for (const row of all) {
+    const meta = JSON.parse(row.data);
+    if (!groups[meta.category]) groups[meta.category] = [];
+    groups[meta.category].push(meta);
+  }
+
+  let html = '';
+  for (const [cat, docs] of Object.entries(groups)) {
+    html += `<div class="card"><div class="card-title">📂 ${cat} <span class="badge badge-blue">${docs.length}</span></div><div class="doc-list">`;
+    for (const doc of docs) {
+      const icon = doc.type?.includes('pdf') ? '📄' : doc.type?.includes('image') ? '🖼' : '📝';
+      const size = (doc.size / 1024).toFixed(1) + ' KB';
+      const date = new Date(doc.uploadedAt).toLocaleDateString('en-IN');
+      html += `
+        <div class="doc-item">
+          <span class="doc-enc-badge">🔐 Enc</span>
+          <div class="doc-item-icon">${icon}</div>
+          <div class="doc-item-name">${escHtml(doc.name)}</div>
+          <div class="doc-item-meta">${size} · ${date}</div>
+          <div class="doc-item-actions">
+            <button class="btn btn-sm" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;flex:1;box-shadow:0 2px 8px rgba(124,58,237,0.3)" onclick="downloadDoc('${doc.id}')">⬇ Download</button>
+            <button class="btn btn-sm btn-danger" onclick="deleteDoc('${doc.id}')">🗑</button>
+          </div>
+        </div>`;
+    }
+    html += '</div></div>';
+  }
+  container.innerHTML = html;
+}
+
+async function downloadDoc(id) {
+  const row = await dbGet(id);
+  if (!row) return toast('Document not found', 'error');
+  const meta = JSON.parse(row);
+  try {
+    const decBuf = await decryptBinary(cryptoKey, meta.encData);
+    const blob = new Blob([decBuf], { type: meta.type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = meta.name; a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) { toast('Decryption failed', 'error'); }
+}
+
+function deleteDoc(id) {
+  pendingDeleteId = id;
+  document.getElementById('delete-modal').classList.add('show');
+}
+
+async function confirmDelete() {
+  if (!pendingDeleteId) return;
+  await dbDelete(pendingDeleteId);
+  pendingDeleteId = null;
+  closeModal();
+  toast('Document deleted', 'success');
+  loadDocuments();
+  loadDashboard();
+}
+
+function closeModal() {
+  document.getElementById('delete-modal').classList.remove('show');
+  pendingDeleteId = null;
+}
+
+// ══════════ QUICK FILL ══════════
+const FILL_SECTIONS = [
+  {
+    title: 'Personal Details', items: [
+      { label: 'Full Name', key: 'p_full_name' },
+      { label: "Father's Name", key: 'p_father_name' },
+      { label: "Mother's Name", key: 'p_mother_name' },
+      { label: 'Date of Birth', key: 'p_dob' },
+      { label: 'Gender', key: 'p_gender' },
+      { label: 'Category', key: 'p_category' },
+      { label: 'Religion', key: 'p_religion' },
+      { label: 'Nationality', key: 'p_nationality' },
+      { label: 'Marital Status', key: 'p_marital' },
+      { label: 'PwD', key: 'p_pwd' },
+      { label: 'Ex-Serviceman', key: 'p_exsm' },
+      { label: 'Domicile State', key: 'p_domicile' },
+    ]
+  },
+  {
+    title: 'Contact Details', items: [
+      { label: 'Mobile', key: 'p_mobile' },
+      { label: 'Alternate Mobile', key: 'p_mobile2' },
+      { label: 'Email', key: 'p_email' },
+      { label: 'Permanent Address', key: 'p_address_perm' },
+      { label: 'Permanent City', key: 'p_city_perm' },
+      { label: 'Permanent District', key: 'p_dist_perm' },
+      { label: 'Permanent State', key: 'p_state_perm' },
+      { label: 'Permanent PIN', key: 'p_pin_perm' },
+      { label: 'Correspondence Address', key: 'p_address_corr' },
+      { label: 'Correspondence City', key: 'p_city_corr' },
+      { label: 'Correspondence State', key: 'p_state_corr' },
+      { label: 'Correspondence PIN', key: 'p_pin_corr' },
+    ]
+  },
+  {
+    title: 'Identity Numbers', items: [
+      { label: 'Aadhaar Number', key: 'p_aadhaar' },
+      { label: 'PAN Number', key: 'p_pan' },
+      { label: 'Passport Number', key: 'p_passport' },
+      { label: 'Passport Expiry', key: 'p_passport_expiry' },
+      { label: 'Voter ID', key: 'p_voter_id' },
+      { label: 'Driving Licence', key: 'p_dl' },
+    ]
+  },
+  {
+    title: '10th Details', items: [
+      { label: 'Board', key: 'p_10_board' },
+      { label: 'Year', key: 'p_10_year' },
+      { label: 'Percentage/CGPA', key: 'p_10_marks' },
+      { label: 'Roll Number', key: 'p_10_roll' },
+    ]
+  },
+  {
+    title: '12th Details', items: [
+      { label: 'Board', key: 'p_12_board' },
+      { label: 'Year', key: 'p_12_year' },
+      { label: 'Percentage/CGPA', key: 'p_12_marks' },
+      { label: 'Stream', key: 'p_12_stream' },
+    ]
+  },
+  {
+    title: 'Graduation', items: [
+      { label: 'Degree', key: 'p_grad_degree' },
+      { label: 'Specialization', key: 'p_grad_spec' },
+      { label: 'College/University', key: 'p_grad_college' },
+      { label: 'Year', key: 'p_grad_year' },
+      { label: 'Percentage/CGPA', key: 'p_grad_marks' },
+      { label: 'Roll Number', key: 'p_grad_roll' },
+    ]
+  },
+  {
+    title: 'Post Graduation', items: [
+      { label: 'Degree', key: 'p_pg_degree' },
+      { label: 'Specialization', key: 'p_pg_spec' },
+      { label: 'University', key: 'p_pg_college' },
+      { label: 'Year', key: 'p_pg_year' },
+      { label: 'Percentage/CGPA', key: 'p_pg_marks' },
+    ]
+  },
+  {
+    title: 'Bank Details', items: [
+      { label: 'Bank Name', key: 'p_bank_name' },
+      { label: 'Account Number', key: 'p_bank_acc' },
+      { label: 'IFSC Code', key: 'p_bank_ifsc' },
+      { label: 'Branch', key: 'p_bank_branch' },
+    ]
+  },
+];
+
+async function loadQuickFill() {
+  const profile = await getProfile();
+  const container = document.getElementById('quickfill-content');
+  let html = '';
+  for (const section of FILL_SECTIONS) {
+    const filled = section.items.filter(i => profile[i.key]);
+    if (!filled.length) continue;
+    html += `<div class="card"><div class="card-title">${section.title}</div><div class="copy-grid">`;
+    for (const item of filled) {
+      const val = profile[item.key];
+      html += `
+        <div class="copy-item">
+          <div class="copy-item-left">
+            <div class="copy-item-label">${escHtml(item.label)}</div>
+            <div class="copy-item-value" title="${escHtml(val)}">${escHtml(val)}</div>
+          </div>
+          <button class="copy-btn" onclick="copyField(this, '${escAttr(val)}')">Copy</button>
+        </div>`;
+    }
+    html += '</div></div>';
+  }
+  if (!html) {
+    html = '<div class="empty-state"><div class="empty-icon">📋</div><p>No profile data yet. Fill in your profile first.</p></div>';
+  }
+  container.innerHTML = html;
+}
+
+function copyField(btn, value) {
+  navigator.clipboard.writeText(value).then(() => {
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ══════════ DASHBOARD ══════════
+async function loadDashboard() {
+  const all = await dbGetAll();
+  document.getElementById('stat-docs').textContent = all.length;
+  const profile = await getProfile();
+  const filled = Object.values(profile).filter(v => v && v.trim()).length;
+  document.getElementById('stat-fields').textContent = filled;
+}
+
+// ══════════ UTILS ══════════
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.className = '', 3000);
+}
+
+// ══════════ EXTENSION EXPORT ══════════
+async function exportToExtension() {
+  const profile = await getProfile();
+  if (!Object.keys(profile).length) return toast('No profile data to export. Fill your profile first.', 'error');
+  const payload = JSON.stringify({ v: 1, app: 'certapp', profile, exportedAt: new Date().toISOString() });
+  const blob = new Blob([payload], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'certapp-profile.certapp'; a.click();
+  URL.revokeObjectURL(url);
+  toast('Profile exported! Import it in the CertApp extension.', 'success');
+}
+
+async function copyProfileJSON() {
+  const profile = await getProfile();
+  if (!Object.keys(profile).length) return toast('No profile data. Fill your profile first.', 'error');
+  const payload = JSON.stringify({ v: 1, app: 'certapp', profile });
+  navigator.clipboard.writeText(payload).then(() => {
+    const el = document.getElementById('ext-copy-status');
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) {
+  return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>
