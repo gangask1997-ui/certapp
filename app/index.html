@@ -19,8 +19,49 @@
       --muted: #7c72a8;
       --radius: 10px;
     }
+    /* ── Light mode ── */
+    body.light {
+      --bg: #f5f3ff;
+      --surface: #ffffff;
+      --surface2: #ede9fe;
+      --border: #ddd6fe;
+      --accent: #7c3aed;
+      --accent2: #6d28d9;
+      --text: #1e1b4b;
+      --muted: #7c3aed99;
+      --green: #16a34a;
+      --red: #dc2626;
+    }
+    body.light #auth-screen {
+      background: radial-gradient(ellipse at 50% 30%, #ddd6fe 0%, #f5f3ff 65%);
+    }
+    body.light .auth-card {
+      box-shadow: 0 8px 40px rgba(124,58,237,0.12);
+    }
+    body.light .stat-card::before {
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+    }
+    body.light .stat-num {
+      background: linear-gradient(135deg, #1e1b4b, #7c3aed);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    body.light .sidebar-logo {
+      background: linear-gradient(135deg, #7c3aed, #4c1d95);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+
+    /* ── Theme Toggle ── */
+    .theme-toggle {
+      position: fixed; top: 14px; right: 16px; z-index: 500;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 12px; cursor: pointer;
+      font-size: 0.78rem; color: var(--muted); font-weight: 600;
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
 
     /* ── Auth Screen ── */
     #auth-screen {
@@ -249,6 +290,8 @@
   </style>
 </head>
 <body>
+
+<button class="theme-toggle" onclick="toggleTheme()" id="theme-btn">🌙 Dark</button>
 
 <!-- ══════════ AUTH SCREEN ══════════ -->
 <div id="auth-screen">
@@ -491,6 +534,24 @@
 <div id="toast"></div>
 
 <script>
+// ══════════ THEME ══════════
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  const btn = document.getElementById('theme-btn');
+  btn.textContent = isLight ? '🌑 Dark' : '🌙 Light';
+  localStorage.setItem('certapp_theme', isLight ? 'light' : 'dark');
+}
+(function() {
+  const saved = localStorage.getItem('certapp_theme');
+  if (saved === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('theme-btn');
+      if (btn) btn.textContent = '🌑 Dark';
+    });
+  }
+})();
+
 // ══════════ CRYPTO ENGINE ══════════
 const SALT_KEY = 'dv_salt';
 const DATA_KEY = 'dv_data';
